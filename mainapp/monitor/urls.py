@@ -3,4 +3,7 @@ from .views import *
 
 urlpatterns = [
     path('', Prediction.as_view(), name = 'prediction'),
+    path('query_influxdb', QueryInfluxDB.as_view(), name = 'query_influxdb'),
+    path('query_mongodb', QueryMongoDB.as_view(), name = 'query_mongodb'),
+    path('prediction_by_device/<str:flotta_device_id>', prediction_by_device),
 ]
