@@ -16,6 +16,12 @@ import json
 from datetime import datetime
 import pymongo
 
+#paho mqtt
+import random
+import os
+from paho.mqtt import client as mqtt_client
+
+
 #get device predicitions
 @api_view(['GET'])
 def prediction_by_device(request, flotta_device_id):
@@ -40,7 +46,33 @@ def prediction_by_device(request, flotta_device_id):
         return Response(data, status=200)
     else:
         return Response({"error": True}, status=200)
+
+@api_view(['POST'])
+def action_to_device(request):
+    data = json.loads(request.body)
     
+    client = ApiConfig.connect_mqtt()
+    client.loop_start()
+    result = ApiConfig.publish_mqtt(client, data['pump_device_id'], data['pump_action'])
+    if(result):
+        return Response({"published": True }, status=200)
+    else:
+        return Response({"published": False }, status=200)
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class Prediction(APIView):
     def post(self, request):
         # data = request.data
