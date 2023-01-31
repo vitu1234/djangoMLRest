@@ -61,6 +61,42 @@ def action_to_device(request):
  
 
 
+@api_view(['GET'])
+def query_mongodb(request):
+    database = ApiConfig.get_mongo_database()
+    
+    collection = database["sensors"]
+    data_array = []
+    cursor = collection.distinct("flotta_egdedevice_id")
+    for document in cursor:
+        # date_time_str = str(document['timestamp'])
+        # date_time_obj =datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S.%f')
+        # date_time_str = date_time_obj.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # row = {
+        #     "flotta_egdedevice_id": document['flotta_egdedevice_id'],
+        #     "temperature": document['temperature'],
+        #     "humidity": document['humidity'],
+        #     "soil_moisture": document['soil_moisture'],
+        #     "timestamp": date_time_str
+        # }
+        # data_array.append(row)
+        device = document
+        #get data based on device_id
+        cursor2 = collection.find_one({"flotta_egdedevice_id":device},sort=[( 'timestamp', pymongo.DESCENDING )]) 
+        
+        PredictionMade = ApiConfig.get_prediction(cursor2['temperature'], cursor2['humidity'],cursor2['soil_moisture'])
+        row = {
+            "flotta_egdedevice_id": device,
+            "actual_soil_moisture": cursor2['soil_moisture'],
+            "predicted_soil_moisture": PredictionMade
+        }
+        data_array.append(row)
+
+
+    # json_data = json.dumps(data_array) 
+    return Response(data_array, status=200)
+
 
 
 
@@ -126,7 +162,7 @@ class QueryInfluxDB(APIView):
 
 
 class QueryMongoDB(APIView):
-    def get():
+    def get(request):
         # data = request.data
         # json_data = json.loads(request.body)
 
