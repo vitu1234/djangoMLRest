@@ -76,15 +76,15 @@ class RegisterView(APIView):
         
 
         serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=False)
-        serializer.save()
-        return Response(serializer.data)
+        # serializer.is_valid(raise_exception=False)
+        # serializer.save()
+        # return Response(serializer.data)
         try:
             serializer.is_valid(raise_exception=False)
             serializer.save()
             return Response(serializer.data)
         except DatabaseError as e:
-            return Response(str(e))
+            return Response({"error":True, "msg":"An error occured on the server, if it persits, contact system admin!"})
 
 #register user
 @api_view(['POST'])
