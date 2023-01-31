@@ -76,11 +76,26 @@ WSGI_APPLICATION = 'mainapp.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default':
+        {
+            'ENGINE': 'djongo',
+            'NAME': 'mqtt_bucket',
+            'CLIENT':
+                {
+                    'host':
+                        'mongodb://username:password'
+                        '@192.168.13.206:27017/'
+                        '?retryWrites=true&w=majority'
+                }
+        }
 }
 
 
