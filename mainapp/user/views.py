@@ -25,12 +25,14 @@ from django.contrib.auth.models import User
 from rest_framework.authentication import TokenAuthentication
 from rest_framework import generics
 from rest_framework import status, permissions
-from .serializers import UserSerializer,RegisterSerializer
+from .serializers import UserSerializer
 
 #paho mqtt
 import random
 import os
 from paho.mqtt import client as mqtt_client
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 ApiConfig = apps.ApiConfig
 
 # Class based view to Get User Details using Token Authentication
@@ -41,7 +43,17 @@ class UserDetailAPI(APIView):
     user = User.objects.get(id=request.user.id)
     serializer = UserSerializer(user)
     return Response(serializer.data)
+  
+class LoginView(TokenObtainPairView):
+    serializer_class = "MyTokenObtainPairSerializer"
 
+# view for registering users
+class RegisterView(APIView):
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 #get device predicitions
 @api_view(['GET'])
