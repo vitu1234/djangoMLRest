@@ -66,58 +66,25 @@ class RegisterView(APIView):
             return Response({"error":True, "msg":"Last Name not set"}, status=status.HTTP_400_BAD_REQUEST)
         
         #check if user exists in the database
+        database = ApiConfig.get_mongo_database()
+    
+        collection = database["user_user"]
         
-
+        cursor2 = collection.find_one({"email":request_data_copy.get('email')}) 
+        if cursor2 != None:
+            return Response({"error":True, "msg":"Username or email in use"}, status=status.HTTP_400_BAD_REQUEST)
+        
 
         serializer = UserSerializer(data=request.data)
-        
+        serializer.is_valid(raise_exception=False)
+        serializer.save()
+        return Response(serializer.data)
         try:
             serializer.is_valid(raise_exception=False)
             serializer.save()
             return Response(serializer.data)
-        except DatabaseError  as e:
+        except DatabaseError as e:
             return Response(str(e))
-
-#get device predicitions
-@api_view(['GET'])
-def prediction_by_device(request, flotta_device_id):
-    database = ApiConfig.get_mongo_database()
-    
-    collection = database["sensors"]
-    device = flotta_device_id
-    #get data based on device_id
-    cursor2 = collection.find_one({"flotta_egdedevice_id":device},sort=[( 'timestamp', pymongo.DESCENDING )]) 
-    if cursor2 != None:
-
-        PredictionMade = ApiConfig.get_prediction(cursor2['temperature'], cursor2['humidity'],cursor2['soil_moisture'])
-        
-        data = {
-            "error": False,
-            "flotta_egdedevice_id": device,
-            "temperature": cursor2['temperature'],
-            "humidity": cursor2['humidity'],
-            "actual_soil_moisture": cursor2['soil_moisture'],
-            "predicted_soil_moisture": float(format(float(PredictionMade), '.2f'))
-        }
-        return Response(data, status=200)
-    else:
-        return Response({"error": True}, status=200)
-
-@api_view(['POST'])
-def create_user_account(request):
-    data = json.loads(request.body)
-    
-    username = data['username']
-    email = data['password']
-    password = data['password']
-
-    client = ApiConfig.connect_mqtt()
-    client.loop_start()
-    result = ApiConfig.publish_mqtt(client, data['pump_device_id'], data['pump_action'])
-    if(result):
-        return Response({"published": True }, status=200)
-    else:
-        return Response({"published": False }, status=200)
 
 #register user
 @api_view(['POST'])
@@ -133,7 +100,6 @@ def register(request, format='json'):
         return Response(user_json, status=status.HTTP_201_CREATED)
     else:
         return Response({"failed":True}, status=status.HTTP_417_EXPECTATION_FAILED)
-
 
 
 

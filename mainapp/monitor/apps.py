@@ -33,15 +33,16 @@ class ApiConfig(AppConfig):
         MONGO_ADDR = os.getenv("MONGO_ADDR", "127.0.0.1")
         MONGO_USERNAME = os.getenv("MONGO_USERNAME", "not_set_username")
         MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "not_set_password")
-        MONGO_DB = os.getenv("MONGOBB_NAME", "env_not_set_mongo_db")
+        MONGO_DB = os.getenv("MONGODB_NAME", "env_not_set_mongo_db")
         # Provide the mongodb atlas url to connect python to mongodb using pymongo
-        CONNECTION_STRING = "mongodb://"+MONGO_USERNAME+":"+MONGO_PASSWORD+"@"+MONGO_ADDR
-        
+        CONNECTION_STRING = "mongodb://username:password@192.168.13.206:27017"
+        # CONNECTION_STRING = "mongodb://"+MONGO_USERNAME+":"+MONGO_PASSWORD+"@"+MONGO_ADDR
+
         # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
         client = MongoClient(CONNECTION_STRING)
         
         # Create the database for our example (we will use the same database throughout the tutorial
-        return client[MONGO_DB]
+        return client["mqtt_bucket"]
 
    #get predictions from the ML model 
     def get_prediction(temperature, humidity, soil_moisture):
