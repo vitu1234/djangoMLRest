@@ -1,3 +1,4 @@
+from django.db import DatabaseError
 from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
 # Create your views here.
@@ -49,11 +50,33 @@ class LoginView(TokenObtainPairView):
 
 # view for registering users
 class RegisterView(APIView):
-    def post(self, request):
+    def post(self, request, format='json'):
+        request_data_copy = request.data.copy()
+
+        #validate form fields and make user all fields are properly set
+        if(request_data_copy.get('username') is None):
+            return Response({"error":True, "msg":"Username not set"}, status=status.HTTP_400_BAD_REQUEST)
+        if(request_data_copy.get('email') is None):
+            return Response({"error":True, "msg":"Email not set"}, status=status.HTTP_400_BAD_REQUEST)
+        if(request_data_copy.get('password') is None):
+            return Response({"error":True, "msg":"Password not set"}, status=status.HTTP_400_BAD_REQUEST)
+        if(request_data_copy.get('first_name') is None):
+            return Response({"error":True, "msg":"First Name not set"}, status=status.HTTP_400_BAD_REQUEST)
+        if(request_data_copy.get('last_name') is None):
+            return Response({"error":True, "msg":"Last Name not set"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        #check if user exists in the database
+        
+
+
         serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        
+        try:
+            serializer.is_valid(raise_exception=False)
+            serializer.save()
+            return Response(serializer.data)
+        except DatabaseError  as e:
+            return Response(str(e))
 
 #get device predicitions
 @api_view(['GET'])
