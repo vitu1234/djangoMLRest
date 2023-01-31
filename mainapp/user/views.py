@@ -27,12 +27,16 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import generics
 from rest_framework import status, permissions
 from .serializers import UserSerializer
+from .serializers import MyTokenObtainPairSerializer
 
 #paho mqtt
 import random
 import os
 from paho.mqtt import client as mqtt_client
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView
+    )
 
 ApiConfig = apps.ApiConfig
 
@@ -46,7 +50,7 @@ class UserDetailAPI(APIView):
     return Response(serializer.data)
   
 class LoginView(TokenObtainPairView):
-    serializer_class = "MyTokenObtainPairSerializer"
+    serializer_class = MyTokenObtainPairSerializer
 
 # view for registering users
 class RegisterView(APIView):

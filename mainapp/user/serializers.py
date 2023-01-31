@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from .models import User
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -20,6 +23,22 @@ class UserSerializer(serializers.ModelSerializer):
     
     user.save()
     return user
-   
+
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attr):
+        data = super().validate(attr)
+        token = self.get_token(self.user)
+        data['id'] = self.user.id
+        data['username'] = self.user.username
+        data['email'] = self.user.email
+        data['first_name'] = self.user.first_name
+        data['last_name'] = self.user.last_name
+
+        data['error'] = False
+        data['msg'] = "Logged in user"
+        
+        return data
 
 
