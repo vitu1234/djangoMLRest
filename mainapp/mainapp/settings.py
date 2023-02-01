@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 
 from pathlib import Path
+from datetime import timedelta
+
+from decouple import config
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,10 +25,10 @@ MODELS = os.path.join(BASE_DIR, 'ml/models')
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-51ic=c$xvs-1h&rg-t%#tla@rqa-1+8j5tv3hr7@4!0(2h72v*'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG=config('DEBUG',default=True, cast=bool)
 
 ALLOWED_HOSTS = ['127.0.0.1', '192.168.13.200', 'localhost']
 
@@ -42,6 +46,8 @@ INSTALLED_APPS = [
     'user',
     'rest_framework',
     'rest_framework_simplejwt',
+    'device',
+    "farm"
 ]
 
 MIDDLEWARE = [
@@ -89,12 +95,12 @@ DATABASES = {
     'default':
         {
             'ENGINE': 'djongo',
-            'NAME': 'mqtt_bucket',
+            'NAME': ''+config('MONGODB_NAME')+'',
             'CLIENT':
                 {
                     'host':
-                        'mongodb://username:password'
-                        '@192.168.13.206:27017/'
+                        'mongodb://'+config('MONGO_USERNAME')+':'+config('MONGO_PASSWORD')+''
+                        '@'+config('MONGO_ADDR')+':'+config('MONGO_ADDR_PORT')+'/'
                         '?retryWrites=true&w=majority'
                 }
         }
@@ -144,12 +150,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 REST_FRAMEWORK = {
-    
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-    
+    ),
 }
 
 AUTH_USER_MODEL = 'user.User'
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=300),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('JWT',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+}

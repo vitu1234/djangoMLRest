@@ -23,4 +23,6 @@ urlpatterns = [
     path('api-token-auth', views.obtain_auth_token),
     path('', include('monitor.urls')),#monitor app url
     path('',include('user.urls')),
+    path('',include('device.urls')),
+    path('',include('farm.urls')),
 ]
