@@ -5,7 +5,7 @@ from .views import *
 urlpatterns = [
 
   path('api/devices/unclaimed', unclaimed_devices), #get unclaimed devices
-#   path('query_mongodb', query_mongodb),
+  path('api/user/add_device', add_user_device),
 
 
 ]
