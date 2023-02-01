@@ -51,16 +51,33 @@ def prediction_by_device(request, flotta_device_id):
         return Response({"error": True}, status=200)
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
 def action_to_device(request):
-    data = json.loads(request.body)
+    request_data_copy = request.data.copy()
     
+    if(request_data_copy.get('pump_action')=="true"):
+        pump_action=1
+        switch_status=True
+    else:
+        pump_action=0
+        switch_status=False
+
     client = ApiConfig.connect_mqtt()
     client.loop_start()
-    result = ApiConfig.publish_mqtt(client, data['pump_device_id'], data['pump_action'])
+    result = ApiConfig.publish_mqtt(client, request_data_copy.get('pump_device_id'), pump_action)
+    
+    #update mongodb table here
+    # switch_status = True if (request_data_copy.get('pump_action') == 1) else False
+    database = ApiConfig.get_mongo_database()
+    collection = database["user_devices"]
+    myquery = { "device_id": request_data_copy.get('pump_device_id') }
+    newvalues = { "$set": {"switch_status":switch_status} }
+    collection.update_one(myquery, newvalues)
+
     if(result):
-        return Response({"published": True }, status=200)
+        return Response({"published": True, "error":False }, status=200)
     else:
-        return Response({"published": False }, status=200)
+        return Response({"published": False,  "error":True }, status=200)
  
 
 
