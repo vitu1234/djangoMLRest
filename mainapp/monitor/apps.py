@@ -6,6 +6,7 @@ from django.conf import settings
 from pymongo import MongoClient
 from paho.mqtt import client as mqtt_client
 import paho.mqtt.publish as publish
+from decouple import config
 
 import json
 
@@ -22,27 +23,23 @@ class ApiConfig(AppConfig):
 
     #MQTT VARIABLES
     random_id = random.randint(100, 90000)
-    BROKER = "192.168.13.203"
-    TOPIC = "sensors/data"
+    BROKER = config('MQTT_BROKER_ADDR')
+    TOPIC = config('MQTT_TOPIC')
     THIS_DEVICE = "API_SERVER"
     CLIENT_ID = THIS_DEVICE+str(random_id) # concatenate 4 numbers to uniquely identify this device
-    PORT = 1883
+    PORT = int(config('MQTT_PORT'))
     
 
     def get_mongo_database():
-        MONGO_ADDR = os.getenv("MONGO_ADDR", "127.0.0.1")
-        MONGO_USERNAME = os.getenv("MONGO_USERNAME", "not_set_username")
-        MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "not_set_password")
-        MONGO_DB = os.getenv("MONGODB_NAME", "env_not_set_mongo_db")
         # Provide the mongodb atlas url to connect python to mongodb using pymongo
-        CONNECTION_STRING = "mongodb://username:password@192.168.13.206:27017"
+        CONNECTION_STRING = "mongodb://"+config('MONGO_USERNAME')+":"+config('MONGO_PASSWORD')+"@"+config('MONGO_ADDR')+":"+config('MONGO_ADDR_PORT')
         # CONNECTION_STRING = "mongodb://"+MONGO_USERNAME+":"+MONGO_PASSWORD+"@"+MONGO_ADDR
 
         # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
         client = MongoClient(CONNECTION_STRING)
         
         # Create the database for our example (we will use the same database throughout the tutorial
-        return client["mqtt_bucket"]
+        return client[config('MONGODB_NAME')]
 
    #get predictions from the ML model 
     def get_prediction(temperature, humidity, soil_moisture):

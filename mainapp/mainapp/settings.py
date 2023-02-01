@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,10 +22,10 @@ MODELS = os.path.join(BASE_DIR, 'ml/models')
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-51ic=c$xvs-1h&rg-t%#tla@rqa-1+8j5tv3hr7@4!0(2h72v*'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG=config('DEBUG',default=True, cast=bool)
 
 ALLOWED_HOSTS = ['127.0.0.1', '192.168.13.200', 'localhost']
 
@@ -89,12 +90,12 @@ DATABASES = {
     'default':
         {
             'ENGINE': 'djongo',
-            'NAME': 'mqtt_bucket',
+            'NAME': ''+config('MONGODB_NAME')+'',
             'CLIENT':
                 {
                     'host':
-                        'mongodb://username:password'
-                        '@192.168.13.206:27017/'
+                        'mongodb://'+config('MONGO_USERNAME')+':'+config('MONGO_PASSWORD')+''
+                        '@'+config('MONGO_ADDR')+':'+config('MONGO_ADDR_PORT')+'/'
                         '?retryWrites=true&w=majority'
                 }
         }
