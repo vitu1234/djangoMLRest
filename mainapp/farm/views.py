@@ -71,3 +71,25 @@ def add_user_farm(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#add user farm when registering
+@api_view(['POST'])
+@permission_classes((AllowAny, ))
+def register_user_farm(request):    
+    request_data_copy = request.data.copy()
+
+    #validate form fields and make user all fields are properly set
+    if(request_data_copy.get('farm_name') is None):
+        return Response({"error":True, "msg":"Farm name not set"}, status=status.HTTP_400_BAD_REQUEST)
+    if(request_data_copy.get('user_id') is None):
+        return Response({"error":True, "msg":"Failed to get the created account data"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    request_data_copy["user_id"]=request_data_copy.get('user_id')
+    serializer = FarmSerializer(data=request_data_copy)
+    if serializer.is_valid():
+        serializer.save()
+        results = serializer.data
+        results['error'] =False
+        return Response(results, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
