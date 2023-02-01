@@ -49,3 +49,24 @@ def user_farms(request):
         return Response(data_array, status=status.HTTP_200_OK)
     else:
         return Response({"error": True, "msg":"No user farms"}, status=status.HTTP_200_OK)
+
+
+#add user farms
+@api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
+def add_user_farm(request):
+    #get logged in user
+    serializer = UserSerializer(request.user)
+    logged_user = serializer.data
+    request_data_copy = request.data.copy()
+
+    #validate form fields and make user all fields are properly set
+    if(request_data_copy.get('farm_name') is None):
+        return Response({"error":True, "msg":"Farm name not set"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    request_data_copy["user_id"]=logged_user["id"]
+    serializer = FarmSerializer(data=request_data_copy)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

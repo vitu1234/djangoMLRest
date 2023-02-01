@@ -5,7 +5,7 @@ from .views import *
 urlpatterns = [
 
   path('api/user/farms', user_farms), #get user farms
-#   path('query_mongodb', query_mongodb),
+  path('api/user/add_farm', add_user_farm),
 
 
 ]
