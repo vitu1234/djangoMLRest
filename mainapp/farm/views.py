@@ -28,22 +28,23 @@ def user_farms(request):
     
     collection = database["user_farms"]
     cursor = collection.find({"user_id": logged_user["id"]})
-    results = list(cursor)
-
+    
     user_farms = [] 
-    if len(results) >0:
+    if cursor.count() >0:
         for document in cursor:
-
             row = {
-                "flotta_egdedevice_id": document['flotta_egdedevice_id'],
-                "user_claim": document['user_claim'],
-                "mode": document['mode']
+                "id": document['id'],
+                "user_id": document['user_id'],
+                "farm_name": document['farm_name'],
+                "address": document['address'],
+                "longtude": document['longtude'],
+                "latitude": document['latitude'],
             }
             user_farms.append(row)
         data_array = {
             "error":False, 
-            "msg":"Unclaimed devices",
-            "unclaimed_devices": user_farms
+            "msg":"User farms",
+            "user_farms": user_farms
         }
         
         return Response(data_array, status=status.HTTP_200_OK)
