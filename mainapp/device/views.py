@@ -104,6 +104,7 @@ def user_devices(request):
                         "farm_id": document['id'],
                         "device_id": document2['device_id'],
                         "device_name": document2['device_name'],
+                        "switch_status": document2['switch_status'],
                         "description": document2['description'],
 
                         "user_id": document['user_id'],
@@ -138,6 +139,7 @@ def user_farm_devices(request, farm_id):
                 "farm_id": document2['farm_id'],
                 "device_id": document2['device_id'],
                 "device_name": document2['device_name'],
+                "switch_status": document2['switch_status'],
                 "description": document2['description'],
             }
             user_devices.append(row)
