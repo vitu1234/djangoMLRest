@@ -6,6 +6,8 @@ import pandas as pd
 from .apps import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+
 import json
 
 #influxdb
@@ -24,6 +26,7 @@ from paho.mqtt import client as mqtt_client
 
 #get device predicitions
 @api_view(['GET'])
+@permission_classes((AllowAny, ))
 def prediction_by_device(request, flotta_device_id):
     database = ApiConfig.get_mongo_database()
     

@@ -7,6 +7,9 @@ from rest_framework import generics, status,permissions
 
 
 import json
+from datetime import datetime
+import pymongo
+from bson.timestamp import Timestamp
 from monitor import apps
 from device import models as DeviceModel 
 from .serializers import UserDeviceSerializer
@@ -99,12 +102,25 @@ def user_devices(request):
             cursor2 = collection2.find({"farm_id": farm_id})
             if cursor2.count() >0:
                 for document2 in cursor2:
+                    
+                    collection3 = database["sensors"]
+                    cursor3 = collection3.find_one({"flotta_egdedevice_id":document2['device_id']},sort=[( 'timestamp', pymongo.DESCENDING )]) 
+                    
+                    date_time_str = str(cursor3['timestamp'])
+                    date_time_obj =datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S.%f')
+                    date_time_str = date_time_obj.strftime('%Y-%m-%d %H:%M:%S')
+
                     row = {
                         "id": document2['id'],
                         "farm_id": document['id'],
                         "device_id": document2['device_id'],
                         "device_name": document2['device_name'],
+                        "switch_status": document2['switch_status'],
                         "description": document2['description'],
+                        "temperature":  cursor3['temperature'],
+                        "humidity":  cursor3['humidity'],
+                         "soil_moisture":  cursor3['soil_moisture'],
+                         "timestamp": date_time_str,
 
                         "user_id": document['user_id'],
                         "farm_name": document['farm_name'],
@@ -138,6 +154,7 @@ def user_farm_devices(request, farm_id):
                 "farm_id": document2['farm_id'],
                 "device_id": document2['device_id'],
                 "device_name": document2['device_name'],
+                "switch_status": document2['switch_status'],
                 "description": document2['description'],
             }
             user_devices.append(row)

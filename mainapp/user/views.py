@@ -54,6 +54,8 @@ class LoginView(TokenObtainPairView):
 
 # view for registering users
 class RegisterView(APIView):
+    permission_classes = (AllowAny,)
+
     def post(self, request, format='json'):
         request_data_copy = request.data.copy()
 
@@ -86,9 +88,11 @@ class RegisterView(APIView):
         try:
             serializer.is_valid(raise_exception=False)
             serializer.save()
-            return Response(serializer.data)
+            results = serializer.data
+            results['error'] =False
+            return Response(results, status=status.HTTP_201_CREATED)
         except DatabaseError as e:
-            return Response({"error":True, "msg":"An error occured on the server, if it persits, contact system admin!"})
+            return Response({"error":True, "msg":"An error occured on the server, if it persits, contact system admin!"},status=status.HTTP_400_BAD_REQUEST)
 
 #register user
 @api_view(['POST'])
