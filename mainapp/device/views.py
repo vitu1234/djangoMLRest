@@ -102,6 +102,7 @@ def add_user_device(request):
                 else:
                     newdevice = {
                             'user_claim':True,
+                             'mode':'Auto',
                             'device_type': request_data_copy.get('device_type'),
                             'columns_readings_type':((request_data_copy.get('raw_readings_type').lower()).strip()).replace(" ", ""),
                             'columns_readings_units_type':(request_data_copy.get('raw_readings_units_type').strip()).replace(" ", "")
@@ -118,7 +119,9 @@ def add_user_device(request):
                     collection.update_one(myquery, newvalues)
                 else:
                     newdevice = {
+                            "flotta_egdedevice_id": request_data_copy.get('device_id'),
                             'user_claim':True,
+                            'mode':'Auto',
                             'device_type': request_data_copy.get('device_type')
                             }
                     collection.insert_one(newdevice)
@@ -159,39 +162,62 @@ def user_devices(request):
                     collection4 = database["devices"]
                     cursor4 = collection4.find_one({"flotta_egdedevice_id":document2['device_id']})
 
-                    date_time_str = str(cursor3['timestamp'])
-                    date_time_obj =datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S.%f')
-                    date_time_str = date_time_obj.strftime('%Y-%m-%d %H:%M:%S')
+                    if cursor4['device_type'] == 'sensor':
+                        date_time_str = str(cursor3['timestamp'])
+                        date_time_obj =datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S.%f')
+                        date_time_str = date_time_obj.strftime('%Y-%m-%d %H:%M:%S')
 
-                    row = {
-                        "id": document2['id'],
-                        "farm_id": document['id'],
-                        "device_id": document2['device_id'],
-                        "device_name": document2['device_name'],
-                        "switch_status": document2['switch_status'],
-                        "description": document2['description'],
-                         "timestamp": date_time_str,
+                        row = {
+                            "id": document2['id'],
+                            "farm_id": document['id'],
+                            "device_id": document2['device_id'],
+                            "device_name": document2['device_name'],
+                            "switch_status": document2['switch_status'],
+                            "description": document2['description'],
+                            "timestamp": date_time_str,
 
-                        "user_id": document['user_id'],
-                        "farm_name": document['farm_name'],
-                        "address": document['address'],
-                        "longtude": document['longtude'],
-                        "latitude": document['latitude'],
-                    }
+                            "user_id": document['user_id'],
+                            "farm_name": document['farm_name'],
+                            "address": document['address'],
+                            "longtude": document['longtude'],
+                            "latitude": document['latitude'],
 
-                    raw_readings_type_list =  (((cursor4['columns_readings_type'].lower()).strip()).replace(" ", "")).split(",") #lower case,remove commas and spaces and covert to array
-                    raw_readings_units_type_list =  (((cursor4['columns_readings_units_type'].lower()).strip()).replace(" ", "")).split(",") #lower case,remove commas and spaces and covert to array
-                    i = 0
-                    units={}
-                    for value in raw_readings_type_list:
-                        if value !="":
-                            row[value]=cursor3[value]
-                            if i <= len(raw_readings_units_type_list):
-                                units[value]=raw_readings_units_type_list[i]
-                        i+=1        
-                            
-                    row['units']=units
-                    user_devices.append(row)
+                            "device_type": cursor4['device_type']
+                        }
+
+                    
+                        raw_readings_type_list =  (((cursor4['columns_readings_type'].lower()).strip()).replace(" ", "")).split(",") #lower case,remove commas and spaces and covert to array
+                        raw_readings_units_type_list =  (((cursor4['columns_readings_units_type'].lower()).strip()).replace(" ", "")).split(",") #lower case,remove commas and spaces and covert to array
+                        i = 0
+                        units={}
+                        for value in raw_readings_type_list:
+                            if value !="":
+                                row[value]=cursor3[value]
+                                if i <= len(raw_readings_units_type_list):
+                                    units[value]=raw_readings_units_type_list[i]
+                            i+=1        
+                                
+                        row['units']=units
+                        user_devices.append(row)
+                    else:
+                        row = {
+                            "id": document2['id'],
+                            "farm_id": document['id'],
+                            "device_id": document2['device_id'],
+                            "device_name": document2['device_name'],
+                            "switch_status": document2['switch_status'],
+                            "description": document2['description'],
+                            "timestamp": date_time_str,
+
+                            "user_id": document['user_id'],
+                            "farm_name": document['farm_name'],
+                            "address": document['address'],
+                            "longtude": document['longtude'],
+                            "latitude": document['latitude'],
+
+                            "device_type": cursor4['device_type']
+                        }
+                        user_devices.append(row)
         data_array = {
             "error":False, 
             "msg":"User devices",
