@@ -32,10 +32,14 @@ def user_farms(request):
     user_farms = [] 
     if cursor.count() >0:
         for document in cursor:
+            collection2 = database["user_devices"]
+            cursor2 = collection2.find({"farm_id": document['id']})
+
             row = {
                 "id": document['id'],
                 "user_id": document['user_id'],
                 "farm_name": document['farm_name'],
+                "devices_total": cursor2.count(),
                 "address": document['address'],
                 "longtude": document['longtude'],
                 "latitude": document['latitude'],
@@ -69,7 +73,9 @@ def add_user_farm(request):
     serializer = FarmSerializer(data=request_data_copy)
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        results = serializer.data
+        results['error'] =False
+        return Response(results, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 #add user farm when registering
