@@ -113,7 +113,7 @@ def register_device(request, flotta_egdedevice_id,device_type):
             'mode':'Auto',
             'device_type': device_type
         }
-        # collection.insert_one(newdevice)
+        collection.insert_one(newdevice)
         data_array = {
             "error":False, 
             "msg":"success",
