@@ -4,8 +4,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import generics, status,permissions
+from paho.mqtt import client as mqtt_client
+from .mqtt import client as my_mqtt_client
 
-
+from decouple import config
 import json
 from datetime import datetime
 import pymongo
@@ -21,7 +23,8 @@ UserSerializer = UserSerializers.UserSerializer
 
 ApiConfig = apps.ApiConfig
 
-
+#MC TO MC APIs
+#NOT AUTH APIs
 #get unclaimed devices
 @api_view(['GET'])
 @permission_classes((AllowAny, ))
@@ -51,6 +54,93 @@ def unclaimed_devices(request):
     else:
         return Response({"error": True, "msg":"No Unclaimed devices"}, status=200)
 
+#get device details
+@api_view(['GET'])
+@permission_classes((AllowAny, ))
+def device_details(request, flotta_egdedevice_id):
+    database = ApiConfig.get_mongo_database()
+    
+    collection = database["devices"]
+    cursor = collection.find_one({"flotta_egdedevice_id":flotta_egdedevice_id})
+    # return Response("cursor", status=200)
+    devices_details = [] 
+    if bool(cursor):
+        
+        row = {
+            "flotta_egdedevice_id": cursor['flotta_egdedevice_id'],
+            "user_claim": cursor['user_claim'],
+            "mode": cursor['mode'],
+            "device_type": cursor['device_type'],
+        }
+        
+        if cursor['device_type'] =="sensor" and cursor['user_claim']:
+            raw_readings_type_list =  (((cursor['columns_readings_type'].lower()).strip()).replace(" ", "")).split(",") #lower case,remove commas and spaces and covert to array
+            row['columns']=raw_readings_type_list
+        
+        devices_details.append(row)
+        
+        data_array = {
+            "error":False, 
+            "msg":"Device Details",
+            "device_id": flotta_egdedevice_id,
+            "mqtt_response_for":"devices_details",
+            "devices_details": devices_details
+        }
+        #add mqtt publish
+        payload = json.dumps(data_array)
+        result = my_mqtt_client.publish(config('MQTT_TOPIC'), payload)
+        status_mqtt = result[0]
+        if status_mqtt == 0:
+            print("Published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
+        else:
+            print("Failed published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
+        
+        return Response(data_array, status=200)
+    else:
+        return Response({"error": True, "msg":"No device device with given parameter"}, status=200)
+
+#check if device exists or register in
+@api_view(['GET'])
+@permission_classes((AllowAny, ))
+def register_device(request, flotta_egdedevice_id,device_type):
+    database = ApiConfig.get_mongo_database()
+    collection = database["devices"]
+    cursor = collection.find_one({"flotta_egdedevice_id":flotta_egdedevice_id})
+    if not bool(cursor):
+        newdevice = {
+            'flotta_egdedevice_id':flotta_egdedevice_id,
+            'user_claim':False,
+            'mode':'Auto',
+            'device_type': device_type
+        }
+        # collection.insert_one(newdevice)
+        data_array = {
+            "error":False, 
+            "msg":"success",
+            "device_id": flotta_egdedevice_id,
+            "mqtt_response_for":"register_device",
+        }
+        #add mqtt publish
+        payload = json.dumps(data_array)
+        result = my_mqtt_client.publish(config('MQTT_TOPIC'), payload)
+        status_mqtt = result[0]
+        if status_mqtt == 0:
+            print("Published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
+        else:
+            print("Failed published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
+        
+        return Response({"error": False, "msg":"successful"}, status=status.HTTP_200_OK)
+    else:
+        return Response({"error": False, "msg":"successful"}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+#USER TO MACHINE APIs
+#AUTH USER ACCCESS ONLY
 # add user device to a farm already added in db
 @api_view(['POST'])
 @permission_classes((IsAuthenticated, ))
