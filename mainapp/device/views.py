@@ -41,7 +41,8 @@ def unclaimed_devices(request):
             row = {
                 "flotta_egdedevice_id": document['flotta_egdedevice_id'],
                 "user_claim": document['user_claim'],
-                "mode": document['mode']
+                "mode": document['mode'],
+                "device_type": document['device_type']
             }
             devices_unclaimed.append(row)
         data_array = {
@@ -153,7 +154,8 @@ def add_user_device(request):
     if(request_data_copy.get('device_id') is None):
         return Response({"error":True, "msg":"Device ID not set"}, status=status.HTTP_400_BAD_REQUEST)
     if(request_data_copy.get('device_type') is None):
-        return Response({"error":True, "msg":"Device type not set"}, status=status.HTTP_400_BAD_REQUEST)
+        request_data_copy['device_type'] ="sensor"
+        # return Response({"error":True, "msg":"Device type not set"}, status=status.HTTP_400_BAD_REQUEST)
     if(request_data_copy.get('device_name') is None):
         return Response({"error":True, "msg":"Device Name not set"}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -216,7 +218,22 @@ def add_user_device(request):
                             }
                     collection.insert_one(newdevice)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+                    data_array = {
+                        "error":False, 
+                        "msg":"success",
+                        "device_id": request_data_copy.get('device_id'),
+                        "mqtt_response_for":"registered_device_user_claim",
+                    }
+                    #add mqtt publish
+                    payload = json.dumps(data_array)
+                    result = my_mqtt_client.publish(config('MQTT_TOPIC'), payload)
+                    status_mqtt = result[0]
+                    if status_mqtt == 0:
+                        print("Published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
+                    else:
+                        print("Failed published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
+
+            return Response({"error": False, "msg":"successful"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
         return Response({"error": True, "msg":"Device has already been added"}, status=status.HTTP_400_BAD_REQUEST)
@@ -251,7 +268,7 @@ def user_devices(request):
 
                     collection4 = database["devices"]
                     cursor4 = collection4.find_one({"flotta_egdedevice_id":document2['device_id']})
-
+    
                     if cursor4['device_type'] == 'sensor':
                         date_time_str = str(cursor3['timestamp'])
                         date_time_obj =datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S.%f')
