@@ -92,9 +92,9 @@ def device_details(request, flotta_egdedevice_id):
         result = my_mqtt_client.publish(config('MQTT_TOPIC'), payload)
         status_mqtt = result[0]
         if status_mqtt == 0:
-            print("Published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
+            print("DEVICE DETAILS: Published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
         else:
-            print("Failed published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
+            print("DEVICE DETAILS: Failed published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
         
         return Response(data_array, status=200)
     else:
