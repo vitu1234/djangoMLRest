@@ -25,6 +25,8 @@ class ApiConfig(AppConfig):
     random_id = random.randint(100, 90000)
     BROKER = config('MQTT_BROKER_ADDR')
     TOPIC = config('MQTT_TOPIC')
+    MQTT_USERNAME = config('MQTT_USERNAME')
+    MQTT_PASSWORD =config('MQTT_PASSWORD')
     THIS_DEVICE = "API_SERVER"
     CLIENT_ID = THIS_DEVICE+str(random_id) # concatenate 4 numbers to uniquely identify this device
     PORT = int(config('MQTT_PORT'))
