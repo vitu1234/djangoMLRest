@@ -19,7 +19,7 @@ def req_device_details(flotta_egdedevice_id):
     # return Response("cursor", status=200)
     print(cursor)
     devices_details = [] 
-    if len(cursor) !=0:
+    if cursor is not None:
         
         row = {
             "flotta_egdedevice_id": cursor['flotta_egdedevice_id'],
@@ -62,7 +62,7 @@ def req_register_device(flotta_egdedevice_id,device_type):
     collection = database["devices"]
     cursor = collection.find_one({"flotta_egdedevice_id":flotta_egdedevice_id})
     print(cursor)
-    if len(cursor) != 0:
+    if cursor is None:
         newdevice = {
             'flotta_egdedevice_id':flotta_egdedevice_id,
             'user_claim':False,
@@ -87,6 +87,6 @@ def req_register_device(flotta_egdedevice_id,device_type):
         
         return False
     else:
-        print("YO")
+        print("MQTT RESPONSE: device registered already, skip")
         return False
 

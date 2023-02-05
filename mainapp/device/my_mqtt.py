@@ -30,7 +30,7 @@ def on_message(mqtt_client, userdata, msg):
 
 
     else:
-        print("SERVER: MQTT request does not have the parameters for API interaction")
+        print("SERVER on_message: MQTT request does not have the parameters for API interaction")
 
 
 
