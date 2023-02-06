@@ -19,7 +19,7 @@ def on_message(mqtt_client, userdata, msg):
         if("flotta_egdedevice_id" in msg_json and "mqtt_request_for" in msg_json):
             if(msg_json['mqtt_request_for'] == "register_device"):
                 print("SERVER: respond to register request")
-                req_register_device(msg_json['flotta_egdedevice_id'], msg_json['device_type'])
+                req_register_device(msg_json['flotta_egdedevice_id'], msg_json['device_type'], msg_json['raw_readings_type'], msg_json['raw_readings_units_type'])
                 # requests.get('http://localhost:8000/api/devices/register/'+msg_json['flotta_egdedevice_id']+"/"+msg_json['device_type'])
             elif(msg_json['mqtt_request_for'] == "device_details"):
                 print("SERVER: respond to user devices request")

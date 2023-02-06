@@ -56,7 +56,7 @@ def req_device_details(flotta_egdedevice_id):
         return {"error": True, "msg":"No device device with given parameter"}
 
 #check if device exists or register in
-def req_register_device(flotta_egdedevice_id,device_type):
+def req_register_device(flotta_egdedevice_id,device_type, raw_readings_type, raw_readings_units_type):
     print("RESPONSE")
     database = ApiConfig.get_mongo_database()
     collection = database["devices"]
@@ -67,7 +67,9 @@ def req_register_device(flotta_egdedevice_id,device_type):
             'flotta_egdedevice_id':flotta_egdedevice_id,
             'user_claim':False,
             'mode':'Auto',
-            'device_type': device_type
+            'device_type': device_type,
+            'columns_readings_type': raw_readings_type,
+            'columns_readings_units_type': raw_readings_units_type
         }
         collection.insert_one(newdevice)
         data_array = {

@@ -4,8 +4,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import generics, status,permissions
-from paho.mqtt import client as mqtt_client
 from .mqtt import client as my_mqtt_client
+
+from .mqtt_functions import req_device_details, req_register_device
 
 from decouple import config
 import json
@@ -59,80 +60,17 @@ def unclaimed_devices(request):
 @api_view(['GET'])
 @permission_classes((AllowAny, ))
 def device_details(request, flotta_egdedevice_id):
-    database = ApiConfig.get_mongo_database()
-    
-    collection = database["devices"]
-    cursor = collection.find_one({"flotta_egdedevice_id":flotta_egdedevice_id})
-    # return Response("cursor", status=200)
-    devices_details = [] 
-    if bool(cursor):
-        
-        row = {
-            "flotta_egdedevice_id": cursor['flotta_egdedevice_id'],
-            "user_claim": cursor['user_claim'],
-            "mode": cursor['mode'],
-            "device_type": cursor['device_type'],
-        }
-        
-        if cursor['device_type'] =="sensor" and cursor['user_claim']:
-            raw_readings_type_list =  (((cursor['columns_readings_type'].lower()).strip()).replace(" ", "")).split(",") #lower case,remove commas and spaces and covert to array
-            row['columns']=raw_readings_type_list
-        
-        devices_details.append(row)
-        
-        data_array = {
-            "error":False, 
-            "msg":"Device Details",
-            "device_id": flotta_egdedevice_id,
-            "mqtt_response_for":"devices_details",
-            "devices_details": devices_details
-        }
-        #add mqtt publish
-        payload = json.dumps(data_array)
-        result = my_mqtt_client.publish(config('MQTT_TOPIC'), payload)
-        status_mqtt = result[0]
-        if status_mqtt == 0:
-            print("DEVICE DETAILS: Published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
-        else:
-            print("DEVICE DETAILS: Failed published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
-        
-        return Response(data_array, status=200)
-    else:
-        return Response({"error": True, "msg":"No device device with given parameter"}, status=200)
+
+    response = req_device_details(flotta_egdedevice_id)
+    return Response(response, status=200)
+   
 
 #check if device exists or register in
 @api_view(['GET'])
 @permission_classes((AllowAny, ))
-def register_device(request, flotta_egdedevice_id,device_type):
-    database = ApiConfig.get_mongo_database()
-    collection = database["devices"]
-    cursor = collection.find_one({"flotta_egdedevice_id":flotta_egdedevice_id})
-    if not bool(cursor):
-        newdevice = {
-            'flotta_egdedevice_id':flotta_egdedevice_id,
-            'user_claim':False,
-            'mode':'Auto',
-            'device_type': device_type
-        }
-        collection.insert_one(newdevice)
-        data_array = {
-            "error":False, 
-            "msg":"success",
-            "device_id": flotta_egdedevice_id,
-            "mqtt_response_for":"register_device",
-        }
-        #add mqtt publish
-        payload = json.dumps(data_array)
-        result = my_mqtt_client.publish(config('MQTT_TOPIC'), payload)
-        status_mqtt = result[0]
-        if status_mqtt == 0:
-            print("Published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
-        else:
-            print("Failed published to MQTT BROKER: "+config('MQTT_BROKER_ADDR')+"on PORT: "+config('MQTT_PORT'))
-        
-        return Response({"error": False, "msg":"successful"}, status=status.HTTP_200_OK)
-    else:
-        return Response({"error": False, "msg":"successful"}, status=status.HTTP_200_OK)
+def register_device(request, flotta_egdedevice_id,device_type,raw_readings_type, raw_readings_units_type):
+    response = req_register_device(flotta_egdedevice_id, device_type,raw_readings_type, raw_readings_units_type)
+    return Response(response, status=200)
 
 
 
@@ -159,11 +97,11 @@ def add_user_device(request):
     if(request_data_copy.get('device_name') is None):
         return Response({"error":True, "msg":"Device Name not set"}, status=status.HTTP_400_BAD_REQUEST)
     
-    if request_data_copy.get('device_type') == 'sensor':
-        if(request_data_copy.get('raw_readings_type') is None):
-            return Response({"error":True, "msg":"Device readings type not set"}, status=status.HTTP_400_BAD_REQUEST)
-        if(request_data_copy.get('raw_readings_units_type') is None):
-            return Response({"error":True, "msg":"Device readings units type not set"}, status=status.HTTP_400_BAD_REQUEST)
+    # if request_data_copy.get('device_type') == 'sensor':
+    #     if(request_data_copy.get('raw_readings_type') is None):
+    #         return Response({"error":True, "msg":"Device readings type not set"}, status=status.HTTP_400_BAD_REQUEST)
+    #     if(request_data_copy.get('raw_readings_units_type') is None):
+    #         return Response({"error":True, "msg":"Device readings units type not set"}, status=status.HTTP_400_BAD_REQUEST)
      #check if device already exists
      #    
     database = ApiConfig.get_mongo_database()
@@ -186,8 +124,8 @@ def add_user_device(request):
                     "$set": {
                             'user_claim':True,
                             'device_type': request_data_copy.get('device_type'),
-                            'columns_readings_type':((request_data_copy.get('raw_readings_type').lower()).strip()).replace(" ", ""),
-                            'columns_readings_units_type':(request_data_copy.get('raw_readings_units_type').strip()).replace(" ", "")
+                            # 'columns_readings_type':((request_data_copy.get('raw_readings_type').lower()).strip()).replace(" ", ""),
+                            # 'columns_readings_units_type':(request_data_copy.get('raw_readings_units_type').strip()).replace(" ", "")
                             }
                     }
                     collection.update_one(myquery, newvalues)
@@ -196,8 +134,8 @@ def add_user_device(request):
                             'user_claim':True,
                              'mode':'Auto',
                             'device_type': request_data_copy.get('device_type'),
-                            'columns_readings_type':((request_data_copy.get('raw_readings_type').lower()).strip()).replace(" ", ""),
-                            'columns_readings_units_type':(request_data_copy.get('raw_readings_units_type').strip()).replace(" ", "")
+                            # 'columns_readings_type':((request_data_copy.get('raw_readings_type').lower()).strip()).replace(" ", ""),
+                            # 'columns_readings_units_type':(request_data_copy.get('raw_readings_units_type').strip()).replace(" ", "")
                             }
                     collection.insert_one(newdevice)
             else:
@@ -264,8 +202,7 @@ def user_devices(request):
                 for document2 in cursor2:
                     
                     collection3 = database["sensors"]
-                    cursor3 = collection3.find_one({"flotta_egdedevice_id":document2['device_id']},sort=[( 'timestamp', pymongo.DESCENDING )])
-
+                    cursor3 = collection3.find_one({"flotta_edgedevice_id":document2['device_id']},sort=[( 'timestamp', pymongo.DESCENDING )])
                     collection4 = database["devices"]
                     cursor4 = collection4.find_one({"flotta_egdedevice_id":document2['device_id']})
     
